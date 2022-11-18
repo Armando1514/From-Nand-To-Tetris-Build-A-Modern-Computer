@@ -1,4 +1,4 @@
-# From-Nand-To-Tetris-Build-Modern-Computer
+# Boolean Functions and Gate Logic
 
 ## Boolean Functions and Logic Gates
 
