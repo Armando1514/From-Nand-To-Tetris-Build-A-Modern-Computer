@@ -1,0 +1,56 @@
+// This file is part of nand2tetris, as taught in The Hebrew University, and
+// was written by Aviv Yaish. It is an extension to the specifications given
+// [here](https://www.nand2tetris.org) (Shimon Schocken and Noam Nisan, 2017),
+// as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
+// Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+
+/**
+ * A library that supports various program execution services.
+ */
+class Sys {
+    /** Performs all the initializations required by the OS. */
+    function void init() {
+        do Memory.init();
+        do Math.init();
+        do Screen.init();
+        do Output.init();
+        do Keyboard.init();
+        do Main.main();
+        do Sys.halt();
+        return; 
+    }
+
+    /** Halts program execution. */
+    function void halt() {
+        while(true){}
+        return; 
+    }
+
+    /** Waits approximately duration milliseconds and returns.  */
+    function void wait(int duration) {
+        var int i, j; 
+        if (duration<0){ 
+           do Sys.error(1);
+           return; 
+        }
+        let i =0 ; 
+        while (i<duration){
+            let i = i+1;
+            let j = 0;
+            while( j<3) {
+                let i = 100*200;
+                let j = j+1;
+            }
+        }
+        return ;
+    }
+
+    /** Displays the given error code in the form "ERR<errorCode>",
+     *  and halts the program's execution. */
+    function void error(int errorCode) {
+        do Output.printString("SUSTEM ERROR");
+        do Output.printInt(errorCode);
+        do Sys.halt();
+        return; 
+    }
+}

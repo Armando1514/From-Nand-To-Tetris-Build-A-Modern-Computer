@@ -1,0 +1,273 @@
+// This file is part of nand2tetris, as taught in The Hebrew University, and
+// was written by Aviv Yaish. It is an extension to the specifications given
+// [here](https://www.nand2tetris.org) (Shimon Schocken and Noam Nisan, 2017),
+// as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
+// Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+
+/**
+ * A library of functions for displaying graphics on the screen.
+ * The Hack physical screen consists of 256 rows (indexed 0..255, top to bottom)
+ * of 512 pixels each (indexed 0..511, left to right). The top left pixel on 
+ * the screen is indexed (0,0).
+ */
+class Screen {
+        static boolean curColor;
+        static Array twoToThe;
+        static Array screen; 
+
+        /** Initializes the Screen. */
+        function void init() {
+             let screen = 16384; 
+             let curColor = true; 
+             do Screen.initTwoToThe();
+             return; 
+        }
+
+
+        function void initTwoToThe(){
+            let twoToThe = Array.new(16);
+            let twoToThe[0] = 1;
+            let twoToThe[1] = 2;
+            let twoToThe[2] = 4;
+            let twoToThe[3] = 8;
+            let twoToThe[4] = 16;
+            let twoToThe[5] = 32;
+            let twoToThe[6] = 64;
+            let twoToThe[7] = 128;
+            let twoToThe[8] = 256;
+            let twoToThe[9] = 512;
+            let twoToThe[10] = 1024;
+            let twoToThe[11] = 2048;
+            let twoToThe[12] = 4096;
+            let twoToThe[13] = 8192;
+            let twoToThe[14] = 16384;
+            let twoToThe[15] = 16384 + 16384;
+            return; 
+        }
+
+        /** Erases the entire screen. */
+        function void clearScreen() {
+            var int i; 
+            let i =0;
+            while (i<8192){  
+                let screen[i] = 0; 
+                let i = i + 1;
+            }
+            return; 
+        }
+
+        /** Sets the current color, to be used for all subsequent drawXXX commands.
+         *    Black is represented by true, white by false. */
+        function void setColor(boolean b) {
+            let curColor = b; 
+            return; 
+        } 
+
+        function int mod16(int x){
+            return (x&15);
+        }
+
+        function boolean bit(int x, int n){
+            return ((x&twoToThe[n]) = twoToThe[n]);
+        }
+
+        function int multBy32(int x){
+            var int i, out; 
+            let out = x; 
+            let i = 0; 
+            while (i<5){
+                let out = out + out; 
+                let i = i + 1;
+            }
+            return out; 
+        }
+
+        function int divBy16(int x){
+            var int i, out, j;
+            let i = 4; 
+            let out = 0; 
+            while (i<16){
+               if (Screen.bit (x, i)){
+                  let j = i - 4;
+                  let out = out + twoToThe[j];
+               }
+               let i = i+1; 
+            }
+            return out; 
+ 
+        }
+
+        /** Draws the (x,y) pixel, using the current color. */
+        function void drawPixel(int x, int y) {
+            var int address, bitToChange, newBitValue; 
+            if ( Screen.isNotLegal(x, y)){ 
+                 do Sys.error(7);
+            }
+             
+            let address = Screen.multBy32(y) + Screen.divBy16(x);
+            let bitToChange = twoToThe[Screen.mod16(x)];
+
+            if (curColor){
+               let newBitValue = bitToChange | screen[address]; 
+            }
+            else {
+               let newBitValue = (~bitToChange) & screen[address]; 
+            }
+            let screen[address]= newBitValue;
+            return; 
+             
+        }
+
+        function void drawVerticalLine(int x, int y1, int y2){
+           var int i; 
+           if (y1 > y2){
+              let i = y1; 
+              let y1 = y2; 
+              let y2 = i; 
+           }
+           while (y1 < (y2+1)){
+              do Screen.drawPixel(x, y1);
+              let y1 = y1 + 1; 
+           }
+           return; 
+        }
+
+        function void drawInclineLine(int x1, int x2, int y1, int y2){
+           var int i, dx, dy, a, b, diff; 
+           if ( (x2<x1) ){
+              let i = y1; 
+              let y1 = y2; 
+              let y2 = i;
+              let i = x1; 
+              let x1 = x2; 
+              let x2 = i; 
+           }
+           let dx = x2 - x1; 
+           let dy = y2 - y1; 
+           let diff = 0; 
+           while ( (a<(dx+1) ) | (b<(dy-1)) ){
+               do Screen.drawPixel(x1+a, y1+b);
+               if (diff<0){
+                  let b = b - 1;
+                  let diff = diff + dx; 
+               }
+               else {
+                  let a = a+1; 
+                  let diff = diff + dy; 
+               }
+           }
+           return; 
+            
+        }
+
+        function void drawDeclineLine(int x1, int x2, int y1, int y2){
+           var int i, dx, dy, a, b, diff; 
+           if ( (x2<x1) & (y2<y1) ){
+              let i = y1; 
+              let y1 = y2; 
+              let y2 = i;
+              let i = x1; 
+              let x1 = x2; 
+              let x2 = i; 
+           }
+           let dx = x2 - x1; 
+           let dy = y2 - y1; 
+           let diff = 0; 
+           while ( (a<(dx+1)) | (b<(dy+1))){
+               do Screen.drawPixel(x1+a, y1+b);
+               if (diff<0){
+                  let a = a+1;
+                  let diff = diff + dy; 
+               }
+               else {
+                  let b = b+1; 
+                  let diff = diff - dx; 
+               }
+           }
+           return; 
+           
+        }
+
+
+        function void drawHorizontalLine(int x1, int x2, int y){
+           var int i; 
+           if (x1 > x2){
+              let i = x1; 
+              let x1 = x2; 
+              let x2 = i; 
+           }
+           while (x1 < (x2+1)){
+              do Screen.drawPixel(x1, y);
+              let x1 = x1 + 1; 
+           }
+           return;          
+
+        }
+
+        /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+        function void drawLine(int x1, int y1, int x2, int y2) {
+             var int x, y, a, b, diff, dx, dy; 
+             if ( Screen.isNotLegal (x1, y1)| Screen.isNotLegal(x2, y2)){ 
+                 do Sys.error(8);
+             }
+             if (x1 = x2){
+                do Screen.drawVerticalLine(x, y1, y2);
+                return; 
+             }
+             if (y1 = y2){
+                do Screen.drawHorizontalLine(x, y1, y2);
+                return; 
+             }
+    
+             if ( ((x2<x1) & (y2<y1) ) | ((x2>x1) & (y2>y1))){
+                do Screen.drawDeclineLine(x1, x2, y1, y2);
+                return;
+             }
+
+             do Screen.drawInclineLine(x1, x2, y1, y2);
+             return;
+        }
+
+        function boolean isNotLegal(int x, int y){
+             return ( (x < 0) | (y<0) | (x>511) | (y>255) );
+        }
+
+        /** Draws a filled rectangle whose top left corner is (x1, y1)
+         * and bottom right corner is (x2,y2), using the current color. */
+        function void drawRectangle(int x1, int y1, int x2, int y2) {
+             var int i; 
+             if ( Screen.isNotLegal(x1, y1) | Screen.isNotLegal(x2, y2) ){ 
+                 do Sys.error(9);
+             }
+             if (y2<y1){
+                 let i = y1; 
+                 let y1 = y2; 
+                 let y2 = i;
+             }
+             while (y1<y2+1){ 
+                 do Screen.drawLine(x1, y1, x2, y2);
+                 let y1 = y1 +1;
+             }
+             return;
+   
+        }
+
+        /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+        function void drawCircle(int x, int y, int r) {
+            var int dy, r,  halfWidth; 
+            if ( Screen.isNotLegal(x, y) ){ 
+                 do Sys.error(12);
+            }
+            if ( Screen.isNotLegal(x+r, y) | Screen.isNotLegal(x-r, y) | Screen.isNotLegal(x, y+r) |
+                   Screen.isNotLegal(x, y-r) ){
+                 do Sys.error(13); 
+            }
+            let dy = -r; 
+            while (dy < (r+1)){
+                let halfWidth = Math.sqrt((r*r)-(dy*dy));
+                do Screen.drawLine( (x-halfWidth), (y+dy), (x+ halfWidth), (y+dy));
+                let dy = dy + 1;
+            }
+            return;
+        }
+}
